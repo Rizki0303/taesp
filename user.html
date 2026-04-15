@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User - Refrigerator</title>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+</head>
+
+<body>
+
+<h2>Blood Refrigerator 01</h2>
+
+<p id="tanggal"></p>
+<p id="jam"></p>
+
+<h3>Suhu Refrigerator: <span id="suhu"></span> °C</h3>
+
+<button onclick="downloadExcel()">Download Excel</button>
+
+<script>
+// CONFIG FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyCbDmGS4TS--Ky6yygTVuOuUQX4vkeuycY",
+  databaseURL: "https://taesp-ce0a6-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// REALTIME DATA
+db.ref("blood_refrigerator/data").on("value", (snapshot) => {
+  const data = snapshot.val();
+  document.getElementById("suhu").innerText = data.suhu_refrigerator;
+});
+
+// WAKTU
+setInterval(() => {
+  const now = new Date();
+  document.getElementById("tanggal").innerText = now.toLocaleDateString();
+  document.getElementById("jam").innerText = now.toLocaleTimeString();
+}, 1000);
+
+// DOWNLOAD CSV (Excel)
+function downloadExcel() {
+  db.ref("blood_refrigerator/log").once("value", (snapshot) => {
+    let csv = "Tanggal,Jam,Suhu\n";
+
+    snapshot.forEach(year => {
+      year.forEach(month => {
+        month.forEach(day => {
+          day.forEach(hour => {
+            const data = hour.val();
+            csv += `${day.key}/${month.key}/${year.key},${hour.key}:00,${data.suhu_refrigerator}\n`;
+          });
+        });
+      });
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "data_user.csv";
+    a.click();
+  });
+}
+</script>
+
+</body>
+</html>

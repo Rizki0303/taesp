@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teknisi - Refrigerator</title>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+</head>
+
+<body>
+
+<h2>Monitoring Teknisi - Blood Refrigerator</h2>
+
+<p id="tanggal"></p>
+<p id="jam"></p>
+
+<h3>Suhu Refrigerator: <span id="refri"></span> °C</h3>
+<h3>Suhu Kompresor: <span id="comp"></span> °C</h3>
+<h3>Suhu Evaporator: <span id="evap"></span> °C</h3>
+
+<h3>Kompresor: <span id="kompresor"></span></h3>
+<h3>Fan: <span id="fan"></span></h3>
+<h3>Fan Cooling: <span id="fan_cooling"></span></h3>
+
+<button onclick="downloadExcel()">Download Excel</button>
+
+<script>
+// FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyCbDmGS4TS--Ky6yygTVuOuUQX4vkeuycY",
+  databaseURL: "https://taesp-ce0a6-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// AMBIL DATA REALTIME
+db.ref("blood_refrigerator/data").on("value", (snapshot) => {
+  const data = snapshot.val();
+
+  document.getElementById("refri").innerText = data.suhu_refrigerator;
+  document.getElementById("comp").innerText = data.suhu_kompresor;
+  document.getElementById("evap").innerText = data.suhu_evaporator;
+
+  document.getElementById("kompresor").innerText = data.kompresor;
+  document.getElementById("fan").innerText = data.fan;
+  document.getElementById("fan_cooling").innerText = data.fan_cooling;
+});
+
+// WAKTU REALTIME
+setInterval(() => {
+  const now = new Date();
+  document.getElementById("tanggal").innerText = now.toLocaleDateString();
+  document.getElementById("jam").innerText = now.toLocaleTimeString();
+}, 1000);
+
+// DOWNLOAD CSV
+function downloadExcel() {
+  db.ref("blood_refrigerator/log").once("value", (snapshot) => {
+    let csv = "Tanggal,Jam,Refri,Comp,Evap\n";
+
+    snapshot.forEach(year => {
+      year.forEach(month => {
+        month.forEach(day => {
+          day.forEach(hour => {
+            const data = hour.val();
+            csv += `${day.key}/${month.key}/${year.key},${hour.key}:00,${data.suhu_refrigerator},${data.suhu_kompresor},${data.suhu_evaporator}\n`;
+          });
+        });
+      });
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "data_teknisi.csv";
+    a.click();
+  });
+}
+</script>
+
+</body>
+</html>
