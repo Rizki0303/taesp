@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <style>
 body{
   margin:0;
@@ -57,17 +60,89 @@ button{
 </div>
 
 <script>
-function login(){
-  let u = document.getElementById("user").value;
-  let p = document.getElementById("pass").value;
+const firebaseConfig = {
+  apiKey: "AIzaSyCbDmGS4TS--Ky6yygTVuOuUQX4vkeuycY",
+  databaseURL: "https://taesp-ce0a6-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
 
-  if(u=="user" && p=="123"){
-    window.location="user.html";
-  }else if(u=="teknisi" && p=="123"){
-    window.location="teknisi.html";
-  }else{
-    alert("Login gagal!");
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/*
+  DAFTAR AKUN
+  Tambahkan akun baru di bagian ini.
+  username = nama login
+  password = password login
+  kode     = kode identitas petugas/teknisi
+  nama     = nama lengkap
+  role     = user atau teknisi
+*/
+const accounts = {
+  "user1": {
+    password: "123",
+    kode: "USR001",
+    role: "user"
+  },
+  "user2": {
+    password: "456",
+    kode: "USR002",
+    role: "user"
+  },
+  "teknisi1": {
+    password: "123",
+    kode: "TKN001",
+    role: "teknisi"
+  },
+  "teknisi2": {
+    password: "456",
+    kode: "TKN002",
+    role: "teknisi"
   }
+};
+
+function login(){
+  const username = document.getElementById("user").value.trim();
+  const password = document.getElementById("pass").value;
+  const account = accounts[username];
+
+  if(!account || account.password !== password){
+    alert("Username atau password salah!");
+    return;
+  }
+
+  const session = {
+    username: username,
+    kode: account.kode,
+    role: account.role,
+    loginAt: Date.now()
+  };
+
+  sessionStorage.setItem("petugasLogin", JSON.stringify(session));
+
+  const now = new Date();
+  const aktivitas = {
+    kode: account.kode,
+    username: username,
+    jenis: account.role === "teknisi" ? "Teknisi" : "User",
+    aktivitas: "Login",
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  };
+
+  // Catat aktivitas login. Jika aturan Firebase Anda belum mengizinkan write,
+  // proses login tetap dilanjutkan.
+  db.ref("blood_refrigerator/aktivitas").push(aktivitas)
+    .catch(err => console.warn("Aktivitas login tidak tersimpan:", err));
+
+  // Simpan petugas yang sedang aktif.
+  db.ref("blood_refrigerator/petugas_aktif/" + account.kode).set({
+    kode: account.kode,
+    username: username,
+    jenis: account.role === "teknisi" ? "Teknisi" : "User",
+    status: "Aktif",
+    loginAt: firebase.database.ServerValue.TIMESTAMP
+  }).catch(err => console.warn("Status petugas tidak tersimpan:", err));
+
+  window.location = account.role === "teknisi" ? "teknisi.html" : "user.html";
 }
 </script>
 

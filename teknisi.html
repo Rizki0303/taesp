@@ -134,6 +134,14 @@ h1{
 
 <h1>🧊 Blood Refrigerator</h1>
 
+
+<div class="card">
+  <h3>🔧 Teknisi Bertugas</h3>
+  <div id="petugasNama" class="value">Username: --</div>
+  <div id="petugasKode" style="margin-top:5px;font-size:14px;color:#555;">Kode: --</div>
+  <div id="petugasStatus" style="margin-top:5px;font-size:13px;color:#2e7d32;font-weight:bold;">● Sedang Bertugas</div>
+</div>
+
 <div class="card">
   <h3>ID Refrigerator</h3>
   <div class="value">REFRI-01</div>
@@ -289,6 +297,71 @@ function downloadExcel(){
     a.download="data_teknisi.csv";
     a.click();
   });
+}
+</script>
+
+
+<script>
+const loginSession = JSON.parse(sessionStorage.getItem("petugasLogin") || "null");
+
+if(!loginSession){
+  window.location = "index.html";
+}
+
+function tampilkanIdentitas(){
+  if(!loginSession) return;
+  document.getElementById("petugasNama").innerHTML = "Username: " + loginSession.username;
+  document.getElementById("petugasKode").innerHTML = "Kode: " + loginSession.kode;
+}
+
+tampilkanIdentitas();
+
+const presenceRef = db.ref("blood_refrigerator/petugas_aktif/" + loginSession.kode);
+
+function setPetugasAktif(){
+  presenceRef.set({
+    kode: loginSession.kode,
+    username: loginSession.username,
+    jenis: loginSession.role === "teknisi" ? "Teknisi" : "User",
+    status: "Aktif",
+    loginAt: loginSession.loginAt,
+    lastSeen: firebase.database.ServerValue.TIMESTAMP
+  }).catch(err => console.warn("Status aktif tidak tersimpan:", err));
+
+  presenceRef.onDisconnect().update({
+    status: "Offline",
+    lastSeen: firebase.database.ServerValue.TIMESTAMP
+  }).catch(err => console.warn("onDisconnect gagal:", err));
+}
+
+setPetugasAktif();
+
+// Perbarui waktu terakhir terlihat selama halaman terbuka.
+setInterval(() => {
+  presenceRef.update({
+    status: "Aktif",
+    lastSeen: firebase.database.ServerValue.TIMESTAMP
+  }).catch(() => {});
+}, 30000);
+
+function logout(){
+  const aktivitas = {
+    kode: loginSession.kode,
+    username: loginSession.username,
+    jenis: loginSession.role === "teknisi" ? "Teknisi" : "User",
+    aktivitas: "Logout",
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  };
+
+  db.ref("blood_refrigerator/aktivitas").push(aktivitas).catch(() => {});
+  presenceRef.update({
+    status: "Offline",
+    logoutAt: firebase.database.ServerValue.TIMESTAMP,
+    lastSeen: firebase.database.ServerValue.TIMESTAMP
+  }).catch(() => {});
+
+  sessionStorage.removeItem("petugasLogin");
+  window.location = "index.html";
 }
 </script>
 
