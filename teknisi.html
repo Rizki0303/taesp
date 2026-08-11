@@ -310,56 +310,17 @@ if(!loginSession){
 
 function tampilkanIdentitas(){
   if(!loginSession) return;
-  document.getElementById("petugasNama").innerHTML = "Username: " + loginSession.username;
-  document.getElementById("petugasKode").innerHTML = "Kode: " + loginSession.kode;
+  document.getElementById("petugasNama").innerHTML =
+    "Username: " + loginSession.username;
+  document.getElementById("petugasKode").innerHTML =
+    "Kode: " + loginSession.kode;
+  document.getElementById("petugasStatus").innerHTML =
+    "● Sedang Bertugas";
 }
 
 tampilkanIdentitas();
 
-const presenceRef = db.ref("blood_refrigerator/petugas_aktif/" + loginSession.kode);
-
-function setPetugasAktif(){
-  presenceRef.set({
-    kode: loginSession.kode,
-    username: loginSession.username,
-    jenis: loginSession.role === "teknisi" ? "Teknisi" : "User",
-    status: "Aktif",
-    loginAt: loginSession.loginAt,
-    lastSeen: firebase.database.ServerValue.TIMESTAMP
-  }).catch(err => console.warn("Status aktif tidak tersimpan:", err));
-
-  presenceRef.onDisconnect().update({
-    status: "Offline",
-    lastSeen: firebase.database.ServerValue.TIMESTAMP
-  }).catch(err => console.warn("onDisconnect gagal:", err));
-}
-
-setPetugasAktif();
-
-// Perbarui waktu terakhir terlihat selama halaman terbuka.
-setInterval(() => {
-  presenceRef.update({
-    status: "Aktif",
-    lastSeen: firebase.database.ServerValue.TIMESTAMP
-  }).catch(() => {});
-}, 30000);
-
 function logout(){
-  const aktivitas = {
-    kode: loginSession.kode,
-    username: loginSession.username,
-    jenis: loginSession.role === "teknisi" ? "Teknisi" : "User",
-    aktivitas: "Logout",
-    timestamp: firebase.database.ServerValue.TIMESTAMP
-  };
-
-  db.ref("blood_refrigerator/aktivitas").push(aktivitas).catch(() => {});
-  presenceRef.update({
-    status: "Offline",
-    logoutAt: firebase.database.ServerValue.TIMESTAMP,
-    lastSeen: firebase.database.ServerValue.TIMESTAMP
-  }).catch(() => {});
-
   sessionStorage.removeItem("petugasLogin");
   window.location = "index.html";
 }

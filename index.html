@@ -4,10 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login</title>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <style>
 body{
   margin:0;
@@ -60,22 +56,10 @@ button{
 </div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyCbDmGS4TS--Ky6yygTVuOuUQX4vkeuycY",
-  databaseURL: "https://taesp-ce0a6-default-rtdb.asia-southeast1.firebasedatabase.app"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
 /*
-  DAFTAR AKUN
-  Tambahkan akun baru di bagian ini.
-  username = nama login
-  password = password login
-  kode     = kode identitas petugas/teknisi
-  nama     = nama lengkap
-  role     = user atau teknisi
+  LOGIN LOKAL
+  Tidak menggunakan Firebase.
+  Data username, password, kode, dan role disimpan di JavaScript.
 */
 const accounts = {
   "user1": {
@@ -119,30 +103,9 @@ function login(){
 
   sessionStorage.setItem("petugasLogin", JSON.stringify(session));
 
-  const now = new Date();
-  const aktivitas = {
-    kode: account.kode,
-    username: username,
-    jenis: account.role === "teknisi" ? "Teknisi" : "User",
-    aktivitas: "Login",
-    timestamp: firebase.database.ServerValue.TIMESTAMP
-  };
-
-  // Catat aktivitas login. Jika aturan Firebase Anda belum mengizinkan write,
-  // proses login tetap dilanjutkan.
-  db.ref("blood_refrigerator/aktivitas").push(aktivitas)
-    .catch(err => console.warn("Aktivitas login tidak tersimpan:", err));
-
-  // Simpan petugas yang sedang aktif.
-  db.ref("blood_refrigerator/petugas_aktif/" + account.kode).set({
-    kode: account.kode,
-    username: username,
-    jenis: account.role === "teknisi" ? "Teknisi" : "User",
-    status: "Aktif",
-    loginAt: firebase.database.ServerValue.TIMESTAMP
-  }).catch(err => console.warn("Status petugas tidak tersimpan:", err));
-
-  window.location = account.role === "teknisi" ? "teknisi.html" : "user.html";
+  window.location = account.role === "teknisi"
+    ? "teknisi.html"
+    : "user.html";
 }
 </script>
 
